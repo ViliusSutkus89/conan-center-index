@@ -1,0 +1,70 @@
+name: build_test
+
+on: push
+
+jobs:
+  build:
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - { "package_version": "libiconv/1.15", "package": "libiconv", "version": "1.15", "conanfile": "recipes/libiconv/all/conanfile.py" }
+          - { "package_version": "libiconv/1.16", "package": "libiconv", "version": "1.16", "conanfile": "recipes/libiconv/all/conanfile.py" }
+          - { "package_version": "libiconv/1.17", "package": "libiconv", "version": "1.17", "conanfile": "recipes/libiconv/all/conanfile.py" }
+        config:
+          - { os: ubuntu-22.04, compiler: ndk-26.3.11579264, host-profile: armv8 }
+          - { os: ubuntu-22.04, compiler: ndk-26.3.11579264, host-profile: x86_64 }
+          - { os: ubuntu-22.04, compiler: ndk-26.3.11579264, host-profile: armv7 }
+          - { os: ubuntu-22.04, compiler: ndk-26.3.11579264, host-profile: x86 }
+          - { os: macos-13, compiler: ndk-26.3.11579264, host-profile: armv8 }
+          - { os: macos-13, compiler: ndk-26.3.11579264, host-profile: x86_64 }
+          - { os: macos-13, compiler: ndk-26.3.11579264, host-profile: armv7 }
+          - { os: macos-13, compiler: ndk-26.3.11579264, host-profile: x86 }
+          - { os: windows-2022, compiler: ndk-26.3.11579264, host-profile: armv8 }
+          - { os: windows-2022, compiler: ndk-26.3.11579264, host-profile: x86_64 }
+          - { os: windows-2022, compiler: ndk-26.3.11579264, host-profile: armv7 }
+          - { os: windows-2022, compiler: ndk-26.3.11579264, host-profile: x86 }
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'ndk;26.3.11579264'
+
+      - name: expand ANDROID_HOME env var in conan profile
+        if: startsWith(matrix.config.compiler, 'ndk-')
+        run: perl -pi -e 's/\$ANDROID_HOME/$ENV{ANDROID_HOME}/g' .github/config/${{ matrix.config.os }}-${{ matrix.config.compiler }}/conan/profiles/host
+
+      - name: setup python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: install python dependencies
+        run: pip install --upgrade pip conan setuptools
+
+      - name: conan config
+        run: conan config install .github/config/${{ matrix.config.os }}-${{ matrix.config.compiler }}/conan
+
+      - name: conan install
+        run: conan install ${{ matrix.package.conanfile }} --version ${{ matrix.package.version }} --build missing --profile:host ${{ matrix.config.host-profile }}
+
+      - name: conan source
+        run: conan source ${{ matrix.package.conanfile }} --version ${{ matrix.package.version }}
+      - name: conan build
+        run: conan build ${{ matrix.package.conanfile }} --version ${{ matrix.package.version }} --profile:host ${{ matrix.config.host-profile }}
+      - name: conan export
+        run: conan export ${{ matrix.package.conanfile }} --version ${{ matrix.package.version }}
+      - name: conan export-pkg
+        run: conan export-pkg ${{ matrix.package.conanfile }} --version ${{ matrix.package.version }} --profile:host ${{ matrix.config.host-profile }}
+
+      - name: conan test
+        run: conan test recipes/libiconv/all/test_package/conanfile.py ${{ matrix.package.package_version }} --build missing --profile:host ${{ matrix.config.host-profile }}
