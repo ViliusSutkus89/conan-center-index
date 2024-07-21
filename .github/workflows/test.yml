@@ -16,9 +16,11 @@ jobs:
       - name: install python dependencies and setuptools (required to build GLib)
         run: pip install --upgrade pip conan setuptools
 
-      - name: conan config
-        run: conan config install .github/conan
+      - run: conan --version
+      - run: conan config install .github/conan
 
-      - run: conan create recipes/glib/all/conanfile.py --version 2.78.3 --build missing
+      - run: conan install recipes/glib/all/conanfile.py --version 2.78.3 --build missing
+
+      - run: conan create recipes/glib/all/conanfile.py --version 2.78.3
 
       - run: conan cache check-integrity glib
