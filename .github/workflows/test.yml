@@ -24,3 +24,27 @@ jobs:
       - run: conan create recipes/glib/all/conanfile.py --version 2.78.3
 
       - run: conan cache check-integrity glib
+ workaround:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: install python dependencies and setuptools (required to build GLib)
+        run: pip install --upgrade pip conan setuptools
+
+      - run: conan --version
+      - run: conan config install .github/conan
+
+      - run: conan install recipes/glib/all/conanfile.py --version 2.78.3 --build missing
+
+      - run: conan create recipes/glib/all/conanfile.py --version 2.78.3
+
+      - name: __pycache__ issue workaround
+        run: find ~/.conan2 -type d -name __pycache__ -exec rm -r {} +
+
+      - run: conan cache check-integrity glib
