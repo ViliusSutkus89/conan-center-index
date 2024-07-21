@@ -43,8 +43,10 @@ jobs:
       - run: conan install recipes/glib/all/conanfile.py --version 2.78.3 --build missing
 
       - run: conan create recipes/glib/all/conanfile.py --version 2.78.3
+        env:
+          # __pycache__ issue workaround
+          PYTHONDONTWRITEBYTECODE: 1
 
-      - name: __pycache__ issue workaround
-        run: find ~/.conan2 -type d -name __pycache__ -exec rm -r {} +
+      - run: find ~/.conan2 -type d -name __pycache__
 
       - run: conan cache check-integrity glib
