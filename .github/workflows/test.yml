@@ -12,6 +12,7 @@ jobs:
           - { os: ubuntu-22.04, compiler: clang-16 }
           - { os: windows-2022, compiler: msvc-192 }
           - { os: windows-2022, compiler: msvc-193 }
+          - { os: windows-2022, compiler: msvc-194 }
     steps:
       - name: checkout
         uses: actions/checkout@v4
