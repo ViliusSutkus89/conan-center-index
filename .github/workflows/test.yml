@@ -24,6 +24,6 @@ jobs:
 
       - run: conan config install .github/config/${{ matrix.os }}-${{ matrix.compiler }}/conan
 
-      - run: conan install recipes/freetype/all/conanfile.py --version 2.13.2 --build=missing
+      - run: conan install recipes/freetype/meson/conanfile.py --version 2.13.2 --build=missing
 
-      - run: conan create recipes/freetype/all/conanfile.py --version 2.13.2
+      - run: conan create recipes/freetype/meson/conanfile.py --version 2.13.2
