@@ -1,0 +1,29 @@
+name: Test
+
+on: push
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, compiler: clang-16 }
+          - { os: windows-2022, compiler: msvc-1939 }
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: install python dependencies
+        run: pip install --upgrade pip conan
+
+      - run: conan config install .github/config/${{ matrix.os }}-${{ matrix.compiler }}/conan
+
+      - run: conan install recipes/freetype/all/conanfile.py --version 2.13.2 --build=missing
+
+      - run: conan create recipes/freetype/all/conanfile.py --version 2.13.2
